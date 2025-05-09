@@ -2,11 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Neon Access</title>
   <style>
-    /* [same styles as before, unchanged except the new link at bottom] */
-    /* ...all your previous styles... */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0a0a0a, #1a001a);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      overflow: hidden;
+    }
+
+    .login-container {
+      background: rgba(20, 0, 30, 0.9);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 25px rgba(255, 0, 150, 0.4), 0 0 50px rgba(200, 0, 255, 0.3);
+      width: 320px;
+      text-align: center;
+      position: relative;
+    }
+
+    .login-container h2 {
+      margin-bottom: 30px;
+      color: #ff0077;
+      letter-spacing: 2px;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #e0e0e0;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #1c1c1c;
+      color: #fff;
+      outline: none;
+      box-shadow: inset 0 0 8px rgba(255, 0, 150, 0.3);
+      transition: 0.3s ease;
+    }
+
+    .input-group input:focus {
+      box-shadow: 0 0 15px #ff0077, 0 0 25px #a200ff;
+    }
+
+    .login-btn {
+      margin-top: 20px;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #ff0055, #a100ff);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #ff0077, 0 0 30px #a100ff;
+    }
+
     .signup-link {
       margin-top: 15px;
       display: block;
@@ -18,6 +95,48 @@
 
     .signup-link:hover {
       color: #ff0077;
+    }
+
+    .glow-circles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      top: 0;
+      left: 0;
+    }
+
+    .glow-circles div {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 0, 150, 0.4), transparent);
+      animation: pulse 6s infinite ease-in-out;
+    }
+
+    .glow-circles div:nth-child(1) {
+      width: 120px;
+      height: 120px;
+      top: -30px;
+      left: -40px;
+    }
+
+    .glow-circles div:nth-child(2) {
+      width: 100px;
+      height: 100px;
+      bottom: -20px;
+      right: -20px;
+      animation-delay: 2s;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.4;
+      }
+      50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+      }
     }
   </style>
 </head>
