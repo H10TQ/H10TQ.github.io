@@ -2,23 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Rickroll Popup</title>
+  <title>Rickroll Popup x2</title>
 </head>
 <body>
-  <button id="rickrollAppBtn">Open Rickroll App</button>
+  <button id="rickrollAppBtn">Open 2 Rickroll Apps</button>
 
   <script>
-    document.getElementById('rickrollAppBtn').addEventListener('click', () => {
+    function openRickrollPopup(nameSuffix, leftPosition) {
       const url = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&modestbranding=1';
-      const windowName = 'you_areaidiot';
+      const windowName = 'you_areaidiot_' + nameSuffix;
       const windowFeatures = 
-        'width=560,height=315,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no';
+        `width=560,height=315,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no,left=${leftPosition},top=100`;
 
-      // Open popup window with embed video URL
       const newWin = window.open('', windowName, windowFeatures);
 
       if (newWin) {
-        // Write minimal HTML to embed the video fullscreen inside the popup
         newWin.document.write(`
           <!DOCTYPE html>
           <html lang="en">
@@ -45,6 +43,11 @@
       } else {
         alert('Popup blocked! Please allow popups for this site.');
       }
+    }
+
+    document.getElementById('rickrollAppBtn').addEventListener('click', () => {
+      openRickrollPopup('1', 100);
+      openRickrollPopup('2', 700);
     });
   </script>
 </body>
