@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Midnight Maze</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+    font-family: 'Courier New', Courier, monospace;
+    color: #eee;
+    user-select: none;
+  }
+
+  #gameContainer {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    margin: 30px auto;
+    background: #111;
+    box-shadow: 0 0 20px #222 inset;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    background: #000;
+  }
+
+  #hud {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+
+  #message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f33;
+    font-size: 48px;
+    font-weight: bold;
+    text-shadow: 0 0 15px #f33;
+    display: none;
+  }
+</style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <div id="message"></div>
+  </div>
+  <div id="hud">Time Left: <span id="timeLeft">60</span> seconds</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const message = document.getElementById('message');
+  const timeLeftDisplay = document.getElementById('timeLeft');
+
+  const tileSize = 40;
+  const gridSize = 15; // 15x15 tiles
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Maze: 0 = empty path, 1 = wall, 2 = exit
+  // Simple predefined maze layout (15x15)
+  // You can create your own maze if you want!
+  const maze = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+    [1,0,1,0,1,0,1,1,0,1,0,1,1,0,1],
+    [1,0,1,0,0,0,0,1,0,0,0,1,2,0,1],
+    [1,0,1,1,1,1,0,1,1,1,0,1,1,0,1],
+    [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+    [1,1,1,1,0,1,1,1,0,1,1,1,1,0,1],
+    [1,0,0,1,0,0,0,1,0,0,0,0,1,0,1],
+    [1,0,1,1,1,1,0,1,1,1,1,0,1,0,1],
+    [1,0,1,0,0,0,0,0,0,0,1,0,1,0,1],
+    [1,0,1,0,1,1,1,1,1,0,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+    [1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ];
+
+  // Player start position (tile coords)
+  let player = {x:1, y:1, radius: tileSize / 3};
+
+  // Shadow enemies
+  let shadows = [
+    {x:13, y:1, direction:1},
+    {x:5, y:7, direction:-1},
+    {x:9, y:10, direction:1}
+  ];
+
+  // Movement controls
+  let keys = {};
+
+  // Timer
+  let timeLeft = 60; // seconds
+  let gameOver = false;
+
+  // Flashlight parameters
+  const flashlightRadius = 120;
+
+  // Draw maze
+  function drawMaze() {
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (maze[y][x] === 1) {
+          ctx.fillStyle = '#222';
+          ctx.fillRect(x*tileSize, y*tileSize, tileSize, tileSize);
+        } else if (maze[y][x] === 2) {
+          ctx.fillStyle = '#0f0'; // exit is green
+          ctx.fillRect(x*tileSize, y*tileSize, tileSize, tileSize);
+        } else {
+          ctx.fillStyle = '#111';
+          ctx.fillRect(x*tileSize, y*tileSize, tileSize, tileSize);
+        }
+      }
+    }
+  }
+
+  // Draw player
+  function drawPlayer() {
+    ctx.fillStyle = '#ff0';
+    ctx.beginPath();
+    ctx.arc(player.x * tileSize + tileSize/2, player.y * tileSize + tileSize/2, player.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw shadows
+  function drawShadows() {
+    ctx.fillStyle = '#800000cc';
+    for (let s of shadows) {
+      ctx.beginPath();
+      ctx.arc(s.x * tileSize + tileSize/2, s.y * tileSize + tileSize/2, player.radius + 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Check wall collision for player movement
+  function canMove(x, y) {
+    if (x < 0 || y < 0 || x >= gridSize || y >= gridSize) return false;
+    return maze[y][x] !== 1;
+  }
+
+  // Update shadows movement (move back and forth horizontally)
+  function updateShadows() {
+    for (let s of shadows) {
+      let newX = s.x + s.direction;
+      if (newX < 0 || newX >= gridSize || maze[s.y][newX] === 1) {
+        s.direction *= -1;
+      } else {
+        s.x = newX;
+      }
+    }
+  }
+
+  // Check collision between player and shadows
+  function checkShadowCollision() {
+    for (let s of shadows) {
+      if (player.x === s.x && player.y === s.y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check if player reached exit
+  function checkExit() {
+    return maze[player.y][player.x] === 2;
+  }
+
+  // Draw flashlight effect (dark overlay with cone of light around player)
+  function drawFlashlight() {
+    // Dark overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.9)';
+    ctx.fillRect(0,0,width,height);
+
+    // Cut out flashlight circle
+    const px = player.x * tileSize + tileSize/2;
+    const py = player.y * tileSize + tileSize/2;
+    let gradient = ctx.createRadialGradient(px, py, flashlightRadius * 0.3, px, py, flashlightRadius);
+    gradient.addColorStop(0, 'rgba(255,255,150,0.9)');
+    gradient.addColorStop(1, 'rgba(255,255,150,0)');
+
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(px, py, flashlightRadius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // Handle player movement input
+  function handleInput() {
+    if (keys['ArrowUp'] || keys['w']) {
+      if (canMove(player.x, player.y -1)) player.y--;
+      keys['ArrowUp'] = false; keys['w'] = false;
+    }
+    if (keys['ArrowDown'] || keys['s']) {
+      if (canMove(player.x, player.y +1)) player.y++;
+      keys['ArrowDown'] = false; keys['s'] = false;
+    }
+    if (keys['ArrowLeft'] || keys['a']) {
+      if (canMove(player.x -1, player.y)) player.x--;
+      keys['ArrowLeft'] = false; keys['a'] = false;
+    }
+    if (keys['ArrowRight'] || keys['d']) {
+      if (canMove(player.x +1, player.y)) player.x++;
+      keys['ArrowRight'] = false; keys['d'] = false;
+    }
+  }
+
+  // Game over handler
+  function endGame(win) {
+    gameOver = true;
+    message.style.display = 'block';
+    if (win) {
+      message.textContent = "YOU ESCAPED!";
+      message.style.color = '#0f0';
+    } else {
+      message.textContent = "CAUGHT BY SHADOWS!";
+      message.style.color = '#f33';
+    }
+  }
+
+  // Game loop
+  let lastTime = 0;
+  function gameLoop(time=0) {
+    if (gameOver) return;
+
+    if (!lastTime) lastTime = time;
+    const delta = time - lastTime;
+
+    if (delta > 1000) {
+      timeLeft--;
+      timeLeftDisplay.textContent = timeLeft;
+      lastTime = time;
+      if (timeLeft <= 0) {
+        endGame(false);
+        return;
+      }
+    }
+
+    handleInput();
+    updateShadows();
+
+    if (checkShadowCollision()) {
+      endGame(false);
+      return;
+    }
+
+    if (checkExit()) {
+      endGame(true);
+      return;
+    }
+
+    drawMaze();
+    drawShadows();
+    drawPlayer();
+    drawFlashlight();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Input listeners
+  window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+  });
+
+  // Start game
+  gameLoop();
+</script>
+</body>
+</html>
