@@ -2,24 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Rickroll Opener</title>
+  <title>Rickroll Popup</title>
 </head>
 <body>
-  <button id="rickrollBtn">Click me!</button>
+  <button id="rickrollAppBtn">Open Rickroll App</button>
 
   <script>
-    document.getElementById('rickrollBtn').addEventListener('click', () => {
-      // Open new window/tab with Rickroll video
-      const newWindow = window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
+    document.getElementById('rickrollAppBtn').addEventListener('click', () => {
+      const url = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=0&modestbranding=1';
+      const windowName = 'you_areaidiot';
+      const windowFeatures = 
+        'width=560,height=315,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no';
 
-      // Try to set the new window's title after it loads
-      newWindow.onload = () => {
-        try {
-          newWindow.document.title = "you areaidiot";
-        } catch(e) {
-          // Can't change title due to cross-origin restrictions
-        }
-      };
+      // Open popup window with embed video URL
+      const newWin = window.open('', windowName, windowFeatures);
+
+      if (newWin) {
+        // Write minimal HTML to embed the video fullscreen inside the popup
+        newWin.document.write(`
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <title>you areaidiot</title>
+            <style>
+              html, body {
+                margin: 0; padding: 0; height: 100%; background: black; overflow: hidden;
+                display: flex; justify-content: center; align-items: center;
+              }
+              iframe {
+                border: none;
+                width: 100%;
+                height: 100%;
+              }
+            </style>
+          </head>
+          <body>
+            <iframe src="${url}" allow="autoplay" allowfullscreen></iframe>
+          </body>
+          </html>
+        `);
+        newWin.document.close();
+      } else {
+        alert('Popup blocked! Please allow popups for this site.');
+      }
     });
   </script>
 </body>
